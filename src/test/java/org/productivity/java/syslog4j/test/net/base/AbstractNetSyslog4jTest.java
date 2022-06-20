@@ -456,6 +456,6 @@ public abstract class AbstractNetSyslog4jTest extends AbstractBaseTest {
 		SyslogUtility.sleep(100);
 
 		Syslog.initialize();
-		SyslogServer.initialize();
+		SyslogServer.createDefaultServer();
 	}
 }

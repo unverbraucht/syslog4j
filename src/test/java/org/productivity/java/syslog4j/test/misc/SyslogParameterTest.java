@@ -1,8 +1,5 @@
 package org.productivity.java.syslog4j.test.misc;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.net.InetAddress;
 import java.security.Key;
 import java.util.ArrayList;
@@ -14,8 +11,6 @@ import javax.crypto.spec.SecretKeySpec;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggerFactory;
 import org.productivity.java.syslog4j.Syslog;
 import org.productivity.java.syslog4j.SyslogBackLogHandlerIF;
 import org.productivity.java.syslog4j.SyslogConfigIF;
@@ -28,13 +23,8 @@ import org.productivity.java.syslog4j.SyslogRuntimeException;
 import org.productivity.java.syslog4j.impl.AbstractSyslog;
 import org.productivity.java.syslog4j.impl.AbstractSyslogConfig;
 import org.productivity.java.syslog4j.impl.AbstractSyslogConfigIF;
-import org.productivity.java.syslog4j.impl.backlog.NullSyslogBackLogHandler;
 import org.productivity.java.syslog4j.impl.backlog.Syslog4jBackLogHandler;
-import org.productivity.java.syslog4j.impl.backlog.log4j.Log4jSyslogBackLogHandler;
-import org.productivity.java.syslog4j.impl.backlog.printstream.PrintStreamSyslogBackLogHandler;
 import org.productivity.java.syslog4j.impl.backlog.printstream.SystemErrSyslogBackLogHandler;
-import org.productivity.java.syslog4j.impl.backlog.printstream.SystemOutSyslogBackLogHandler;
-import org.productivity.java.syslog4j.impl.log4j.Syslog4jAppender;
 import org.productivity.java.syslog4j.impl.message.modifier.hash.HashSyslogMessageModifierConfig;
 import org.productivity.java.syslog4j.impl.message.modifier.mac.MacSyslogMessageModifier;
 import org.productivity.java.syslog4j.impl.message.modifier.mac.MacSyslogMessageModifierConfig;
@@ -349,16 +339,11 @@ public class SyslogParameterTest extends TestCase {
 	}
 	
 	public void testSyslogServerExists() {
+		SyslogServer.createDefaultServer();
 		assertFalse(SyslogServer.exists(null));
 		assertFalse(SyslogServer.exists(""));
 		assertTrue(SyslogServer.exists("udp"));
 		assertEquals("udp",SyslogServer.getInstance("udp").getProtocol());
-	}
-	
-	public static class FakeLoggerFactory implements LoggerFactory {
-		public Logger makeNewLoggerInstance(String name) {
-			return Logger.getRootLogger();
-		}
 	}
 	
 	public void testSyslogCreateInstance() {
@@ -418,7 +403,10 @@ public class SyslogParameterTest extends TestCase {
 		SyslogServerConfigIF config = new UDPNetSyslogServerConfig();
 		
 		try {
-			SyslogServer.createInstance("udp",config);
+			if (!SyslogServer.exists("udp")) {
+				SyslogServer.createThreadedInstance("udp", new UDPNetSyslogServerConfig());
+			}
+			SyslogServer.createInstance("udp", config);
 			fail("SyslogServer should not be able to override an already existing protocol");
 			
 		} catch (SyslogRuntimeException sre) {
@@ -732,69 +720,6 @@ public class SyslogParameterTest extends TestCase {
 		udpServerConfig = new UDPNetSyslogServerConfig("hostname3");
 		assertEquals("hostname3",udpServerConfig.getHost());
 	}
-
-	public void testSyslog4jAppender() {
-		Syslog4jAppender appender = new Syslog4jAppender();
-		appender.initialize();
-		
-		appender.setIdent("FakeApp");
-		assertEquals("FakeApp",appender.getIdent());
-
-		appender.setFacility("kern");
-		assertEquals("kern",appender.getFacility());
-
-		appender.setCharSet("FakeCharSet");
-		assertEquals("FakeCharSet",appender.getCharSet());
-		
-		appender.setHost("hostname1");
-		assertEquals("hostname1",appender.getHost());
-		assertEquals("hostname1",appender.getSyslogHost());
-
-		appender.setLocalName("hostname2");
-		assertEquals("hostname2",appender.getLocalName());
-
-		appender.setProtocol("fakeProtocol");
-		assertEquals("fakeProtocol",appender.getProtocol());
-
-		appender.setPort("9999");
-		assertEquals("9999",appender.getPort());
-		
-		appender.setWriteRetries("88");
-		assertEquals("88",appender.getWriteRetries());
-
-		assertFalse(new Boolean(appender.getThreaded()).booleanValue());
-		appender.setThreaded("true");
-		assertTrue(new Boolean(appender.getThreaded()).booleanValue());
-
-		assertFalse(appender.requiresLayout());
-		
-		assertFalse(appender.getHeader());
-		System.err.println("The following two log4j:WARN entries are expected and can be ignored:");
-		appender.setHeader(true);
-		appender.setHeader(true);
-
-		assertFalse(new Boolean(appender.getTruncateMessage()).booleanValue());
-		appender.setTruncateMessage("true");
-		assertTrue(new Boolean(appender.getTruncateMessage()).booleanValue());
-
-		appender.setMaxMessageLength("2048");
-		assertEquals("2048",appender.getMaxMessageLength());
-		
-		appender.setMaxShutdownWait("120000");
-		assertEquals("120000",appender.getMaxShutdownWait());
-		
-		appender.setThreadLoopInterval("8888");
-		assertEquals("8888",appender.getThreadLoopInterval());
-		
-		appender.setSplitMessageBeginText(";;;");
-		assertEquals(";;;",appender.getSplitMessageBeginText());
-
-		appender.setSplitMessageEndText("^^^");
-		assertEquals("^^^",appender.getSplitMessageEndText());
-		
-		appender.setUseStructuredData("true");
-		assertEquals("true",appender.getUseStructuredData());
-	}
 	
 	public void testSSLTCPNetSyslogConfigCreate() {
 		TCPNetSyslogConfig config = null;
@@ -929,207 +854,6 @@ public class SyslogParameterTest extends TestCase {
 		assertEquals(4444,config.getPort());
 		
 		testPoolConfig(config);
-	}
-	
-	public void testBackLogHandlerCreate() {
-		NullSyslogBackLogHandler nbh = new NullSyslogBackLogHandler();
-		nbh.initialize();
-		
-		nbh.down(null,null);
-		nbh.up(null);
-		
-		nbh.log(null, SyslogConstants.LEVEL_DEBUG,"Test (ignore)","really");
-		
-		try {
-			new PrintStreamSyslogBackLogHandler(null);
-			
-		} catch (SyslogRuntimeException sre) {
-			
-		}
-
-		//
-		
-		SyslogBackLogHandlerIF sobh = SystemOutSyslogBackLogHandler.create();
-
-		sobh.log(null,SyslogConstants.LEVEL_DEBUG,"Test (ignore)","really");
-		sobh.down(Syslog.getInstance("udp"),"Test (ignore)");
-		sobh.up(Syslog.getInstance("udp"));
-
-		sobh = new SystemOutSyslogBackLogHandler(false);
-
-		sobh.log(null, SyslogConstants.LEVEL_DEBUG,"Test (ignore)","really");
-
-		//
-		
-		SyslogBackLogHandlerIF sebh = SystemErrSyslogBackLogHandler.create();
-		
-		sebh.log(null, SyslogConstants.LEVEL_DEBUG,"Test (ignore)","really");
-
-		sebh = new SystemErrSyslogBackLogHandler(false);
-		
-		sebh.log(null, SyslogConstants.LEVEL_DEBUG,"Test (ignore)","really");
-		
-		//
-		
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		
-		PrintStream ps = new PrintStream(baos);
-		
-		PrintStreamSyslogBackLogHandler psbh = new PrintStreamSyslogBackLogHandler(ps);
-		
-		psbh.log(null, SyslogConstants.LEVEL_DEBUG,"Test (ignore)","really");
-		
-		try {
-			baos.flush();
-			
-		} catch (IOException ioe) {
-			//
-		}
-		
-		String s = new String(baos.toByteArray());
-		
-		assertTrue(s.equals("DEBUG Test (ignore) [really]"));
-		
-		baos.reset();
-		
-		psbh.log(null, SyslogConstants.LEVEL_DEBUG,null,"really");
-		s = new String(baos.toByteArray());
-		assertTrue(s.equals("DEBUG UNKNOWN [really]"));
-
-		baos.reset();
-
-		psbh.log(null, SyslogConstants.LEVEL_DEBUG,"Test (ignore)",null);
-		s = new String(baos.toByteArray());
-		assertTrue(s.equals("DEBUG Test (ignore) [UNKNOWN]"));
-
-		//
-	
-		Class loggerClass = null;
-		
-		try {
-			new Log4jSyslogBackLogHandler(loggerClass);
-			fail("null loggerClass should throw an exception");
-			
-		} catch (SyslogRuntimeException sre) {
-			//
-		}
-
-		try {
-			new Log4jSyslogBackLogHandler(loggerClass,true);
-			fail("null loggerClass should throw an exception");
-			
-		} catch (SyslogRuntimeException sre) {
-			//
-		}
-		
-		loggerClass = this.getClass();
-		
-		new Log4jSyslogBackLogHandler(loggerClass);
-
-		new Log4jSyslogBackLogHandler(loggerClass,true);
-
-		Logger logger = null;
-		
-		try {
-			new Log4jSyslogBackLogHandler(logger);
-			fail("null logger should throw an exception");
-			
-		} catch (SyslogRuntimeException sre) {
-			//
-		}
-
-		try {
-			new Log4jSyslogBackLogHandler(logger,true);
-			fail("null logger should throw an exception");
-			
-		} catch (SyslogRuntimeException sre) {
-			//
-		}
-		
-		String loggerName = null;
-
-		try {
-			new Log4jSyslogBackLogHandler(loggerName);
-			fail("null loggerName should throw an exception");
-			
-		} catch (SyslogRuntimeException sre) {
-			//
-		}
-		
-		try {
-			new Log4jSyslogBackLogHandler(loggerName,true);
-			fail("null loggerName should throw an exception");
-			
-		} catch (SyslogRuntimeException sre) {
-			//
-		}
-		
-		try {
-			new Log4jSyslogBackLogHandler(loggerName,null);
-			fail("null loggerName should throw an exception");
-			
-		} catch (SyslogRuntimeException sre) {
-			//
-		}
-		
-		try {
-			new Log4jSyslogBackLogHandler(loggerName,null,true);
-			fail("null loggerName should throw an exception");
-			
-		} catch (SyslogRuntimeException sre) {
-			//
-		}
-		
-		loggerName = "Foo";
-		
-		new Log4jSyslogBackLogHandler(loggerName);
-		
-		new Log4jSyslogBackLogHandler(loggerName,true);
-		
-		LoggerFactory loggerFactory = null;
-
-		try {
-			new Log4jSyslogBackLogHandler(loggerName,loggerFactory);
-			fail("null loggerFactory should throw an exception");
-			
-		} catch (SyslogRuntimeException sre) {
-			//
-		}
-
-		try {
-			new Log4jSyslogBackLogHandler(loggerName,loggerFactory,true);
-			fail("null loggerFactory should throw an exception");
-			
-		} catch (SyslogRuntimeException sre) {
-			//
-		}
-		
-		loggerFactory = new FakeLoggerFactory();
-		
-		new Log4jSyslogBackLogHandler(loggerName,loggerFactory);
-		
-		new Log4jSyslogBackLogHandler(loggerName,loggerFactory,true);
-
-		logger = Logger.getRootLogger();
-		
-		new Log4jSyslogBackLogHandler(logger);
-
-		new Log4jSyslogBackLogHandler(logger,true);
-	}
-	
-	public void testLog4jSyslogBackLogHandler() {
-		SyslogBackLogHandlerIF bh = new Log4jSyslogBackLogHandler(this.getClass());
-		
-		bh.log(null,SyslogConstants.LEVEL_INFO,"Log4j BackLog Test Message - IGNORE","really");
-
-		bh.log(null,-1,"Log4j BackLog Test Message - IGNORE","really");
-
-		bh = new Log4jSyslogBackLogHandler(this.getClass(),false);
-		
-		bh.log(null,SyslogConstants.LEVEL_INFO,"Log4j BackLog Test Message - IGNORE","really");
-		
-		bh.down(Syslog.getInstance("udp"),null);
-		bh.up(Syslog.getInstance("udp"));
 	}
 	
 	public void testSyslog4jBackLogHandler() {

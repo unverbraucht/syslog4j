@@ -3,7 +3,6 @@ package org.productivity.java.syslog4j.test;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.productivity.java.syslog4j.test.log4j.Log4jSyslog4jTest;
 import org.productivity.java.syslog4j.test.message.UDPPCISyslogMessageTest;
 import org.productivity.java.syslog4j.test.message.modifier.SyslogMessageModifierTest;
 import org.productivity.java.syslog4j.test.message.modifier.SyslogMessageModifierVerifyTest;
@@ -67,7 +66,6 @@ public class Syslog4jTest {
 		testSuite.addTestSuite(MultipleSyslog4jTest.class);
 		testSuite.addTestSuite(NonPersistentTCPNetSyslog4jTest.class);
 		testSuite.addTestSuite(UDPPCISyslogMessageTest.class);
-		testSuite.addTestSuite(Log4jSyslog4jTest.class);
 		testSuite.addTestSuite(BackLogTCPNetSyslog4jTest.class);
 		testSuite.addTestSuite(SyslogServerSessionTest.class);
 
