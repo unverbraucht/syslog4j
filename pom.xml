@@ -1,12 +1,12 @@
 <project>
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.syslog4j</groupId>
+    <groupId>com.kevin-read</groupId>
     <artifactId>syslog4j-parent</artifactId>
-    <version>1-SNAPSHOT</version>
+    <version>2</version>
   </parent>
   <artifactId>syslog4j</artifactId>
-  <version>0.9.47-SNAPSHOT</version>
+  <version>0.9.48</version>
   <packaging>jar</packaging>
   <name>${project.artifactId}</name>
 
@@ -14,13 +14,13 @@
     Syslog protocol (RFC 3164) and the draft "structured syslog" protocol (RFC
     Draft).
   </description>
-  <url>https://github.com/syslog4j</url>
+  <url>https://github.com/unverbraucht/syslog4j</url>
   <inceptionYear>2007</inceptionYear>
   <scm>
-    <connection>scm:git:git@github.com:syslog4j/${project.artifactId}.git
+    <connection>scm:git:git@github.com:unverbraucht/${project.artifactId}.git
     </connection>
     <developerConnection>${project.scm.connection}</developerConnection>
-    <url>https://github.com/syslog4j/${project.artifactId}</url>
+    <url>https://github.com/unverbraucht/${project.artifactId}</url>
     <tag>HEAD</tag>
   </scm>
 
