@@ -1,6 +1,8 @@
 package org.productivity.java.syslog4j.impl.unix.socket;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.List;
 
 import org.productivity.java.syslog4j.SyslogRuntimeException;
 import org.productivity.java.syslog4j.impl.AbstractSyslog;
@@ -38,6 +40,11 @@ public class UnixSocketSyslog extends AbstractSyslog {
 		public void setSunPath(String sunPath) {
 			System.arraycopy(sunPath.getBytes(), 0,this.sun_path, 0, sunPath.length());
 			System.arraycopy(ZERO_BYTE,0,this.sun_path,sunPath.length(),1);
+		}
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return Arrays.asList("sun_family", "sun_path");
 		}
 	}
 	

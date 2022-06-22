@@ -1,6 +1,7 @@
 package org.productivity.java.syslog4j.test.server.event;
 
 import java.net.InetAddress;
+import java.util.Locale;
 
 import org.productivity.java.syslog4j.server.impl.event.SyslogServerEvent;
 
@@ -10,6 +11,8 @@ public class ServerEventTest extends TestCase {
 	public void testServerEvent() throws Exception {
 		InetAddress inetAddress = InetAddress.getLocalHost();
 		String hostName = inetAddress.getHostName();
+
+		Locale.setDefault(Locale.ENGLISH);
 		
 		int i = hostName.indexOf('.');
 		if (i > -1) {
@@ -28,7 +31,7 @@ public class ServerEventTest extends TestCase {
 		assertEquals("test",event.getMessage());
 		assertTrue(event.isHostStrippedFromMessage());
 
-		InetAddress mirrorInetAddress = InetAddress.getByName("mirror.productivity.org");
+		InetAddress mirrorInetAddress = InetAddress.getByAddress("mirror.productivity.org", new byte [] { -72, 22, -86, -77 });
 		String mirrorHostName = "mirror";
 		
 		message = (baseMessage + mirrorHostName + " test").getBytes();
