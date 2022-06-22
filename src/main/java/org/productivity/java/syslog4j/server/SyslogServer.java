@@ -1,7 +1,7 @@
 package org.productivity.java.syslog4j.server;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,11 +28,7 @@ public class SyslogServer implements SyslogConstants {
 
 	private static boolean SUPPRESS_RUNTIME_EXCEPTIONS = false;
 
-	protected static final Map instances = new Hashtable();
-	
-	static {
-		initialize();
-	}
+	protected static final Map<String, SyslogServerIF> instances = new Hashtable<String, SyslogServerIF>();
 	
 	private SyslogServer() {
 		//
@@ -41,7 +37,7 @@ public class SyslogServer implements SyslogConstants {
 	/**
 	 * @return Returns the current version identifier for Syslog4j.
 	 */
-	public static final String getVersion() {
+	public static String getVersion() {
 		return Syslog4jVersion.VERSION;
 	}
 
@@ -63,23 +59,20 @@ public class SyslogServer implements SyslogConstants {
 	/**
 	 * Throws SyslogRuntimeException unless it has been suppressed via setSuppressRuntimeException(boolean).
 	 * 
-	 * @param message
-	 * @throws SyslogRuntimeException
+	 * @param message message of thrown exception
+	 * @throws SyslogRuntimeException The created message which is thrown
 	 */
 	private static void throwRuntimeException(String message) throws SyslogRuntimeException {
-		if (SUPPRESS_RUNTIME_EXCEPTIONS) {
-			return;
-			
-		} else {
+		if (!SUPPRESS_RUNTIME_EXCEPTIONS) {
 			throw new SyslogRuntimeException(message.toString());
 		}		
 	}
 
-	public static final SyslogServerIF getInstance(String protocol) throws SyslogRuntimeException {
+	public static SyslogServerIF getInstance(String protocol) throws SyslogRuntimeException {
 		String syslogProtocol = protocol.toLowerCase();
 		
 		if (instances.containsKey(syslogProtocol)) {
-			return (SyslogServerIF) instances.get(syslogProtocol);
+			return instances.get(syslogProtocol);
 			
 		} else {
 			throwRuntimeException("SyslogServer instance \"" + syslogProtocol + "\" not defined; use \"tcp\" or \"udp\" or call SyslogServer.createInstance(protocol,config) first");
@@ -87,7 +80,7 @@ public class SyslogServer implements SyslogConstants {
 		}
 	}
 	
-	public static final SyslogServerIF getThreadedInstance(String protocol) throws SyslogRuntimeException {
+	public static SyslogServerIF getThreadedInstance(String protocol) throws SyslogRuntimeException {
 		SyslogServerIF server = getInstance(protocol);
 
 		if (server.getThread() == null) {
@@ -105,7 +98,7 @@ public class SyslogServer implements SyslogConstants {
 		return server;
 	}
 	
-	public static final boolean exists(String protocol) {
+	public static boolean exists(String protocol) {
 		if (protocol == null || "".equals(protocol.trim())) {
 			return false;
 		}
@@ -113,7 +106,7 @@ public class SyslogServer implements SyslogConstants {
 		return instances.containsKey(protocol.toLowerCase());
 	}
 	
-	public static final SyslogServerIF createInstance(String protocol, SyslogServerConfigIF config) throws SyslogRuntimeException {
+	public static SyslogServerIF createInstance(String protocol, SyslogServerConfigIF config) throws SyslogRuntimeException {
 		if (protocol == null || "".equals(protocol.trim())) {
 			throwRuntimeException("Instance protocol cannot be null or empty");
 			return null;
@@ -135,20 +128,15 @@ public class SyslogServer implements SyslogConstants {
 			}
 			
 			try {
-				Class syslogClass = config.getSyslogServerClass();
+				Class<SyslogServerIF> syslogClass = config.getSyslogServerClass();
 				
-				syslogServer = (SyslogServerIF) syslogClass.newInstance();
+				syslogServer = syslogClass.getDeclaredConstructor().newInstance();
 				
-			} catch (ClassCastException cse) {
+			} catch (ClassCastException | IllegalAccessException | InstantiationException | NoSuchMethodException |
+					 InvocationTargetException cse) {
 				throw new SyslogRuntimeException(cse);
-				
-			} catch (IllegalAccessException iae) {
-				throw new SyslogRuntimeException(iae);
-				
-			} catch (InstantiationException ie) {
-				throw new SyslogRuntimeException(ie);
 			}
-	
+
 			syslogServer.initialize(syslogProtocol,config);
 			
 			instances.put(syslogProtocol,syslogServer);
@@ -157,15 +145,13 @@ public class SyslogServer implements SyslogConstants {
 		return syslogServer;
 	}
 
-	public static final SyslogServerIF createThreadedInstance(String protocol, SyslogServerConfigIF config) throws SyslogRuntimeException {
+	public static SyslogServerIF createThreadedInstance(String protocol, SyslogServerConfigIF config) throws SyslogRuntimeException {
 		createInstance(protocol,config);
-		
-		SyslogServerIF server = getThreadedInstance(protocol); 
-		
-		return server;
+
+		return getThreadedInstance(protocol);
 	}
 
-	public synchronized static final void destroyInstance(String protocol) {
+	public synchronized static void destroyInstance(String protocol) {
 		if (protocol == null || "".equals(protocol.trim())) {
 			return;
 		}
@@ -186,7 +172,6 @@ public class SyslogServer implements SyslogConstants {
 			
 		} else {
 			throwRuntimeException("Cannot destroy server protocol \"" + protocol + "\" instance; call shutdown instead");
-			return;
 		}
 	}
 	
@@ -212,20 +197,16 @@ public class SyslogServer implements SyslogConstants {
 		}
 	}
 	
-	public synchronized static void initialize() {
-		createInstance(UDP,new UDPNetSyslogServerConfig());
-		createInstance(TCP,new TCPNetSyslogServerConfig());
+	public synchronized static void createDefaultServer() {
+		createInstance(UDP, new UDPNetSyslogServerConfig());
+		createInstance(TCP, new TCPNetSyslogServerConfig());
 	}
 	
-	public synchronized static final void shutdown() throws SyslogRuntimeException {
-		Set protocols = instances.keySet();
-		
-		Iterator i = protocols.iterator();
-		
-		while(i.hasNext()) {
-			String protocol = (String) i.next();
-			
-			SyslogServerIF syslogServer = (SyslogServerIF) instances.get(protocol);
+	public synchronized static void shutdown() throws SyslogRuntimeException {
+		Set<String> protocols = instances.keySet();
+
+		for (String protocol : protocols) {
+			SyslogServerIF syslogServer = instances.get(protocol);
 
 			syslogServer.shutdown();
 		}

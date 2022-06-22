@@ -122,7 +122,7 @@ public final class SyslogUtility implements SyslogConstants {
 		}
 	}
 
-	public static final boolean isClassExists(String className) {
+	public static boolean isClassExists(String className) {
 		try {
 			Class.forName(className);
 			return true;

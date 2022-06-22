@@ -205,15 +205,15 @@ public final class Syslog implements SyslogConstants {
 	 * initialize() sets up the default TCP and UDP Syslog protocols, as
 	 * well as UNIX_SYSLOG and UNIX_SOCKET (if running on a Unix-based system).
 	 */
-	public synchronized static final void initialize() {
+	public synchronized static void initialize() {
 		createInstance(UDP,new UDPNetSyslogConfig());
 		createInstance(TCP,new TCPNetSyslogConfig());
 		
 		if (OSDetectUtility.isUnix()
 			&& SyslogUtility.isClassExists(JNA_NATIVE_CLASS)
 			&& !Boolean.getBoolean(DISABLE_UNIX_PROPERTY)) {
-			createInstance(UNIX_SYSLOG,new UnixSyslogConfig());
-			createInstance(UNIX_SOCKET,new UnixSocketSyslogConfig());
+			createInstance(UNIX_SYSLOG, new UnixSyslogConfig());
+			createInstance(UNIX_SOCKET, new UnixSocketSyslogConfig());
 		}
 	}
 	

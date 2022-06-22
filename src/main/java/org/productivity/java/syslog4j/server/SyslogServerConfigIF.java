@@ -18,7 +18,7 @@ import org.productivity.java.syslog4j.SyslogRuntimeException;
 * @version $Id: SyslogServerConfigIF.java,v 1.12 2011/01/11 05:11:13 cvs Exp $
 */
 public interface SyslogServerConfigIF extends SyslogConstants, SyslogCharSetIF {
-	public Class getSyslogServerClass();
+	public Class<SyslogServerIF> getSyslogServerClass();
 
 	public String getHost();
 	public void setHost(String host) throws SyslogRuntimeException;

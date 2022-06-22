@@ -6,7 +6,7 @@
     <version>1-SNAPSHOT</version>
   </parent>
   <artifactId>syslog4j</artifactId>
-  <version>0.9.46-SNAPSHOT</version>
+  <version>0.9.47-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>${project.artifactId}</name>
 
@@ -34,6 +34,14 @@
           </excludes>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>7</source>
+          <target>7</target>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
@@ -43,19 +51,17 @@
       <artifactId>commons-pool</artifactId>
       <optional>true</optional>
     </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <optional>true</optional>
-    </dependency>
+
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
+      <version>2.10.14</version>
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>com.sun.jna</groupId>
+      <groupId>net.java.dev.jna</groupId>
       <artifactId>jna</artifactId>
+      <version>5.11.0</version>
       <optional>true</optional>
     </dependency>
     <dependency>
